@@ -38,21 +38,22 @@ Relies on the following assumptions:
 
 $currentDirectory = Get-Location
 $scssFolder = $null
-
-$partialName = $args[3]
-$moduleName = $args[4] ?? 'components'
-
+$partialName = $args[0]
+$moduleName = $args[1] ?? 'components'
 $indexContent =  "@forward '$partialName';"
-
 $partialContent = "@use '../abstracts' as *;`n`n.$partialName {`n`n`n}"
-
 $exitMessage
 
 <# Find the 'scss' folder
   Searches recursively to give some flexibility for different types of project
   architecture, but limited depth and excluded node_modules
 #>
-$scssFolder = Get-ChildItem -Path $currentDirectory -Directory -Exclude .*,node_modules | Get-ChildItem  -Directory -Recurse -Depth 4 -Filter "scss" |  Select -Expand  FullName
+$scssFolder = Get-ChildItem -Path $currentDirectory -Directory -Exclude .*,node_modules -Recurse -Depth 4 -Filter "scss" |  Select -Expand  FullName
+
+if (-not($scssFolder)) {
+  Write-Host "Could not find '/scss'. Exiting without creating new module. "
+  Return
+}
 
 $modulePath = "$scssFolder/\$moduleName"
 
@@ -63,7 +64,9 @@ if (-not(Test-Path -Path $modulePath)) {
   $moduleIndex = New-Item -Path "$modulePath/\_index.scss" -ItemType File | Select -Expand FullName 
 
   $exitMessage = "You added a new module folder: $moduleName.`nMake sure you include it in an entrypoint stylesheet with @use"
+
 } else {
+
 <# If the module folder already exists, make sure it has an _index file  #>
   $moduleIndex = Get-ChildItem  -Path $modulePath -Filter "_index.scss"  |  Select -Expand FullName
 
@@ -81,4 +84,5 @@ Add-Content -Path $moduleIndex -Value $indexContent;
 
 <# Create new partial with variables @import and opening tag #>
 New-Item -Path $partialPath -ItemType File | Add-Content -Value $partialContent
+
 if($exitMessage){ Write-Host $exitMessage}
