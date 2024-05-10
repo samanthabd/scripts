@@ -48,7 +48,7 @@ $exitMessage
   Searches recursively to give some flexibility for different types of project
   architecture, but limited depth and excluded node_modules
 #>
-$scssFolder = Get-ChildItem -Path $currentDirectory -Directory -Exclude .*,node_modules -Recurse -Depth 4 -Filter "scss" |  Select -Expand  FullName
+$scssFolder = Get-ChildItem -Path $currentDirectory -Directory -Recurse -Depth 4 -Filter "scss" | ? {$_ -notmatch 'node_modules|\..*' }   Select -Expand  FullName
 
 if (-not($scssFolder)) {
   Write-Host "Could not find '/scss'. Exiting without creating new module. "
